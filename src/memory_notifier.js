@@ -44,10 +44,11 @@ export default class MemoryNotifier {
   }
 
   notify(channel, message) {
+    if (message == null)
+      message = '';
+
     if (channel in this.observers) {
-      this.observers[channel].forEach(function(observer) {
-        observer.next(message)
-      });
+      this.observers[channel].forEach((observer) => observer.next(message));
     }
   }
 }

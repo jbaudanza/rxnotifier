@@ -35,7 +35,7 @@ export default class RedisNotifier {
   }
 
   notify(key, message) {
-    if (typeof message === 'undefined')
+    if (message == null)
         message = '';
 
     return this.publishClient.publish(key, message);

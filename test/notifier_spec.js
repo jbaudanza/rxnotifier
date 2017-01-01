@@ -27,6 +27,47 @@ export function itShouldActLikeANotifier(notifierFactory) {
     });
   });
 
+  it('should properly encode the channel name', () => {
+    const notifier = notifierFactory();
+    const channelName = '"\'abc 0123 !$&^'
+
+    function doNotification(msg) {
+      if (msg === 'ready') {
+        setTimeout(() => notifier.notify(channelName, 'hello-test'), 0)
+      }
+    }
+
+    const p = notifier.channel(channelName)
+      .do(doNotification)
+      .take(2)
+      .last()
+      .toPromise();
+
+    return p.then(function(result) {
+      assert.equal('hello-test', result);
+    });
+  });
+
+  it('should convert undefined into an empty string', () => {
+    const notifier = notifierFactory();
+
+    function doNotification(msg) {
+      if (msg === 'ready') {
+        setTimeout(() => notifier.notify('test', ''), 0)
+      }
+    }
+
+    const p = notifier.channel('test')
+      .do(doNotification)
+      .take(2)
+      .last()
+      .toPromise();
+
+    return p.then(function(result) {
+      assert.equal('', result);
+    });
+  })
+
   it('should refcount the subscriptions', () => {
     const notifier = notifierFactory();
 
