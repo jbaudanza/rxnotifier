@@ -4,7 +4,7 @@ function collectFromChannel(channel) {
   return channel
     .bufferTime(400)
     .take(1)
-    .toPromise()
+    .toPromise();
 }
 
 function wait(ms) {
@@ -59,4 +59,29 @@ export function itShouldActLikeANotifier(notifierFactory) {
       sub1.unsubscribe();
     });
   });
+
+  it("shouldn't generate warnings", () => {
+    const notifier = notifierFactory();
+    const observable = notifier.channel('hello-notifier');
+
+
+    let warningReceived;
+    function warningHandler(warning) { warningReceived = warning; }
+    process.on('warning', warningHandler);
+
+    function noop() {}
+
+    // We don't want this to generate any warnings, but the warning we are
+    // looking for in particular is "Possible EventEmitter memory leak detected".
+    // See https://github.com/nodejs/node/blob/4c9dd6822eb9520588e4d06d251ce8e32469d4bc/lib/events.js#L259
+    for (let i=0; i<20; i++) {
+      observable.subscribe(noop);
+    }
+
+    return wait(0).then(function() {
+      assert.equal(warningReceived, null);
+
+      process.removeListener('warning', warningHandler);
+    })
+  })
 }
