@@ -79,6 +79,33 @@ notifier.notify('messages', 'world');
 
 The first event that is emitted is always 'ready'. This signals that the subscription to the channel is online and any new messages on the channel will be received.
 
+## Example usage
+
+Say for example you have user records that you want to be able to monitor in real time. You might use a notification channel to subscribe to updates.
+
+```js
+var Pool = require('pg-pool');
+var PgNotifier = require('rxnotifier/pg_notifier');
+
+var pool = new Pool({database: 'helloworld', host: 'localhost'});
+var notifier = new PgNotifier(pool);
+
+function userUpdates(userId) {
+  return notifier.channel('user-' + userId).switchMap(
+    () => pool.query('SELECT * FROM users WHERE id=$1', [userId])
+  );
+}
+```
+
+Somewhere else in your application, you might trigger updates this way.
+```
+function updateUsername(userId, name) {
+  pool.query("UPDATE users SET name=$1 WHERE id=$2", [name, userId]).then(() => {
+    notifier.notify("user-" + userId); // We can leave out the second argument
+  });
+}
+```
+
 ## Related
 
 If you're building an RxJs based application in node, you migth find these other modules handy:
