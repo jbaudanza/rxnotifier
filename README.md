@@ -92,13 +92,14 @@ var notifier = new PgNotifier(pool);
 
 function userUpdates(userId) {
   return notifier.channel('user-' + userId).switchMap(
-    () => pool.query('SELECT * FROM users WHERE id=$1', [userId])
+    () => pool.query('SELECT * FROM users WHERE id=$1', [userId]) // returns a Promise
   );
 }
 ```
 
 Somewhere else in your application, you might trigger updates this way.
-```
+
+```js
 function updateUsername(userId, name) {
   pool.query("UPDATE users SET name=$1 WHERE id=$2", [name, userId]).then(() => {
     notifier.notify("user-" + userId); // We can leave out the second argument
