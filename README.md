@@ -23,15 +23,18 @@ var notifier = new PgNotifier(pool);
 
 ## redis
 
-The RedisNotifier class will use the client class that is passed in to broadcast `PUBLISH` commands. It will create a second connection with the same `connection_options` and use this for `SUBSCRIBE` commands.
+The RedisNotifier class requires two redis clients that are both connected to the same instance to redis. The first client will be used to broadcast `PUBLISH` commands. The second connection will be used to issue `SUBSCRIBE` commands.
+
+The first client can be used be other parts of your appliaction. The subscribe client must be reserved only for the RedisNotifier instance.
 
 ```js
 var redis = require('redis');
 var RedisNotifier = require('rxnotifier/redis_notifier');
 
-var client = redis.createClient();
+var publishClient = redis.createClient();
+var subscribeClient = redis.createClient();
 
-var notifier = new RedisNotifier(client);
+var notifier = new RedisNotifier(publishClient, subscribeClient);
 ```
 
 ## Notification API

@@ -1,32 +1,29 @@
-import redisDriver from 'redis';
 import Rx from 'rxjs';
 
 
 export default class RedisNotifier {
-  constructor(connection, driver=redisDriver) {
-    this.connection = connection;
-    this.subscription = driver.createClient(
-      this.connection.connection_options
-    );
+  constructor(publishClient, subscribeClient) {
+    this.publishClient = publishClient;
+    this.subscribeClient = subscribeClient;
   }
 
   channel(key) {
     return Rx.Observable.create((observer) => {
-      if (!('subscriptionRefCounts' in this.subscription)) {
-        this.subscription.subscriptionRefCounts = {};
+      if (!('subscriptionRefCounts' in this.subscribeClient)) {
+        this.subscribeClient.subscriptionRefCounts = {};
       }
 
-      if (!(key in this.subscription.subscriptionRefCounts)) {
-        this.subscription.subscriptionRefCounts[key] = 0;
+      if (!(key in this.subscribeClient.subscriptionRefCounts)) {
+        this.subscribeClient.subscriptionRefCounts[key] = 0;
       }
 
-      if (this.subscription.subscriptionRefCounts[key] === 0) {
-        this.subscription.subscribe(key, onReady);
+      if (this.subscribeClient.subscriptionRefCounts[key] === 0) {
+        this.subscribeClient.subscribe(key, onReady);
       } else {
         onReady(null, null);
       }
 
-      this.subscription.subscriptionRefCounts[key]++;
+      this.subscribeClient.subscriptionRefCounts[key]++;
 
       function onReady(err, result) {
         if (err)
@@ -41,15 +38,15 @@ export default class RedisNotifier {
         }
       }
 
-      this.subscription.on('message', listener);
+      this.subscribeClient.on('message', listener);
 
       return () => {
-        this.subscription.subscriptionRefCounts[key]--;
+        this.subscribeClient.subscriptionRefCounts[key]--;
 
-        if (this.subscription.subscriptionRefCounts[key] === 0) {
-          this.subscription.unsubscribe(key);
+        if (this.subscribeClient.subscriptionRefCounts[key] === 0) {
+          this.subscribeClient.unsubscribe(key);
         }
-        this.subscription.removeListener('message', listener);
+        this.subscribeClient.removeListener('message', listener);
       };
     });
   }
@@ -58,6 +55,6 @@ export default class RedisNotifier {
     if (typeof message === 'undefined')
         message = '';
 
-    return this.connection.publish(key, message);
+    return this.publishClient.publish(key, message);
   }
 }
