@@ -8,11 +8,18 @@ Aside from the constructors, both APIs are exactly the same.
 ## Installing with [NPM](https://www.npmjs.com/)
 
 ```bash`
-$ npm install rxnotifier
+$ npm install --save rxnotifier
 ```
 ## PostgreSQL
 
 The PgNotifier class will need access to your [connection pool](https://github.com/brianc/node-pg-pool). It will create one long standing connection to use for `LISTEN` commands, and will temporarily acquire a connection for broadcasting `NOTIFY` commands.
+
+You must first install the postgres dependencies are installed.
+
+```bash`
+$ npm install --save pg pg-pool
+```
+
 
 ```js
 var pool = require('pg-pool');
