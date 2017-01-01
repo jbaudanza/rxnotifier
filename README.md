@@ -78,3 +78,10 @@ notifier.notify('messages', 'world');
 ```
 
 The first event that is emitted is always 'ready'. This signals that the subscription to the channel is online and any new messages on the channel will be received.
+
+## Related
+
+If you're building an RxJs based application in node, you migth find these other modules handy:
+
+  - [rxremote](https://github.com/jbaudanza/rxremote) - Access Observables remotely via a WebSocket
+  - [rxeventstore](https://github.com/jbaudanza/rxeventstore) - Persist and query your data using the Event Sourcing pattern
