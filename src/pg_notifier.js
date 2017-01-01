@@ -1,5 +1,3 @@
-import Rx from 'rxjs';
-
 // TODO: These should be optional
 import Pool from 'pg-pool';
 import pg from 'pg';
