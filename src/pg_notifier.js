@@ -4,6 +4,8 @@ import Rx from 'rxjs';
 import Pool from 'pg-pool';
 import pg from 'pg';
 
+import MemoryNotifier from './memory_notifier';
+
 
 const {escapeIdentifier, escapeLiteral} = pg.Client.prototype;
 
@@ -11,54 +13,24 @@ const {escapeIdentifier, escapeLiteral} = pg.Client.prototype;
 export default class PgNotifier {
   constructor(pool) {
     this.pool = pool;
+
+    // Keep one connection open for notifications
+    this.notifyClient = this.pool.connect();
+
+    const onListen = (key) => this.notifyClient.then((client) => client.query('LISTEN ' + escapeIdentifier(key)))
+    const onUnlisten = (key) => this.notifyClient.then((client) => client.query('UNLISTEN ' + escapeIdentifier(key)))
+
+    this.memoryNotifier = new MemoryNotifier(onListen, onUnlisten);
+
+    this.notifyClient.then((client) => {
+      client.on('notification', (event) => {
+        this.memoryNotifier.notify(event.channel, event.payload);
+      });
+    });
   }
 
   channel(key) {
-    // Keep one connection open for notifications
-    if (!this.notifyClient) {
-      this.notifyClient = this.pool.connect();
-    }
-
-    return Rx.Observable.fromPromise(this.notifyClient).flatMap(function(client) {
-      return Rx.Observable.create(function(observer) {
-
-        if (!('subscriptionRefCounts' in client)) {
-          client.subscriptionRefCounts = {};
-        }
-
-        if (!(key in client.subscriptionRefCounts)) {
-          client.subscriptionRefCounts[key] = 0;
-        }
-
-        if (client.subscriptionRefCounts[key] === 0) {
-          client.query('LISTEN ' + escapeIdentifier(key)).then(
-              function() { observer.next('ready'); },
-              function(err) { observer.error(err); }
-          )
-        } else {
-          observer.next('ready');
-        }
-
-        client.subscriptionRefCounts[key]++;
-
-        function listener(event) {
-          if (event.channel === key) {
-            observer.next(event.payload);
-          }      
-        }
-
-        client.on('notification', listener);
-
-        return function() {
-          client.subscriptionRefCounts[key]--;
-
-          if (client.subscriptionRefCounts[key] === 0) {
-            client.query('UNLISTEN ' + escapeIdentifier(key));
-          }
-          client.removeListener('notification', listener);
-        };
-      });
-    });
+    return this.memoryNotifier.channel(key);
   }
 
   notify(channel, message) {

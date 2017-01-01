@@ -10,14 +10,23 @@ export default class MemoryNotifier {
 
   channel(key) {
     return Rx.Observable.create((observer) => {
+      let readyPromise;
+
       if (!(key in this.observers)) {
         this.observers[key] = [];
         if (this.onListen)
-          this.onListen(key);
+          readyPromise = this.onListen(key);
       }
 
       this.observers[key].push(observer);
-      observer.next('ready');
+
+      if (readyPromise) {
+        readyPromise.then(
+          () => observer.next('ready'), (err) => observer.error(err)
+        );
+      } else {
+        observer.next('ready');
+      }
 
       return () => {
         const list = this.observers[key];
