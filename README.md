@@ -1,11 +1,7 @@
 RxNotifier
 ==========
 
-RxNotifier provides your node process with simple pubsub notification channels that are backed by redis, postgres, or both.
-
-Channels are monitored through a simple [RxJs 5](https://github.com/ReactiveX/rxjs) Observable interface.
-
-Aside from the constructors, both APIs are exactly the same.
+RxNotifier providers [RxJs 5](https://github.com/ReactiveX/rxjs) based notification channels backed by redis and/or PostgreSQL.
 
 ## Installing with [NPM](https://www.npmjs.com/)
 
@@ -22,7 +18,7 @@ You must first install the postgres dependencies.
 $ npm install --save pg pg-pool
 ```
 
-The PgNotifier class will need access to your [connection pool](https://github.com/brianc/node-pg-pool). It will create one long standing connection to use for `LISTEN` commands, and will temporarily acquire a connection for broadcasting `NOTIFY` commands.
+The PgNotifier class will need access to your [connection pool](https://github.com/brianc/node-pg-pool). It will create one long standing connection to use for `LISTEN` commands, and will briefly acquire connections for broadcasting `NOTIFY` commands.
 
 ```js
 var Pool = require('pg-pool');
@@ -43,16 +39,16 @@ You must first install the redis dependency.
 $ npm install --save redis
 ```
 
-The RedisNotifier class requires two redis clients that are both connected to the same instance to redis. The first client will be used to broadcast `PUBLISH` commands. The second connection will be used to issue `SUBSCRIBE` commands.
+The `RedisNotifier` class requires two redis clients that are both connected to the same instance to redis. The first client will be used to broadcast `PUBLISH` commands. The second connection will be used to issue `SUBSCRIBE` commands.
 
-The first client can be used be other parts of your appliaction. The subscribe client must be reserved only for the RedisNotifier instance.
+The first client can be used be other parts of your appliaction. The subscribing client must be reserved only for the RedisNotifier instance.
 
 ```js
 var redis = require('redis');
 var RedisNotifier = require('rxnotifier/redis_notifier');
 
-var publishClient = redis.createClient();
-var subscribeClient = redis.createClient();
+var publishClient = redis.createClient(); // This can be used elsewhere in your app
+var subscribeClient = redis.createClient(); // This one must not be used for anything else
 
 var notifier = new RedisNotifier(publishClient, subscribeClient);
 ```
@@ -77,11 +73,11 @@ notifier.notify('messages', 'world');
 // Next: 'world'
 ```
 
-The first event that is emitted is always 'ready'. This signals that the subscription to the channel is online and any new messages on the channel will be received.
+The first event that is emitted will always be 'ready'. This signals that the subscription to the channel is online and any new messages on the channel will be received.
 
 ## Example usage
 
-Say for example you have user records that you want to be able to monitor in real time. You might use a notification channel to subscribe to updates.
+Say for example you have user records that you want to be able to monitor in real time. You might use a notification channel to subscribe to updates:
 
 ```js
 var Pool = require('pg-pool');
@@ -91,13 +87,14 @@ var pool = new Pool({database: 'helloworld', host: 'localhost'});
 var notifier = new PgNotifier(pool);
 
 function userUpdates(userId) {
+  // Map notifications onto SELECT queries
   return notifier.channel('user-' + userId).switchMap(
     () => pool.query('SELECT * FROM users WHERE id=$1', [userId]) // returns a Promise
   );
 }
 ```
 
-Somewhere else in your application, you might trigger updates this way.
+Somewhere else in your application, you might trigger updates this way:
 
 ```js
 function updateUsername(userId, name) {
