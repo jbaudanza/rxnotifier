@@ -1,6 +1,6 @@
 {
   "name": "rxnotifier",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Observable interface to pubsub functionality in redis and postgresql",
   "main": "index.js",
   "scripts": {
