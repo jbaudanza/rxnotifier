@@ -106,7 +106,7 @@ function updateUsername(userId, name) {
 
 ## Related
 
-If you're building an RxJs based application in node, you migth find these other modules handy:
+If you're building an RxJs based application in node, you might find these other modules handy:
 
   - [rxremote](https://github.com/jbaudanza/rxremote) - Access Observables remotely via a WebSocket
   - [rxeventstore](https://github.com/jbaudanza/rxeventstore) - Persist and query your data using the Event Sourcing pattern
