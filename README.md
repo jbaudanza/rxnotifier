@@ -5,7 +5,7 @@ RxNotifier providers [RxJs 5](https://github.com/ReactiveX/rxjs) based notificat
 
 ## Installing with [NPM](https://www.npmjs.com/)
 
-```bash`
+```bash
 $ npm install --save rxnotifier
 ```
 ## PostgreSQL
@@ -14,7 +14,7 @@ The PostgreSQL functionality is based on the [LISTEN](https://www.postgresql.org
 
 You must first install the postgres dependencies.
 
-```bash`
+```bash
 $ npm install --save pg pg-pool
 ```
 
@@ -35,7 +35,7 @@ The redis functionality is based on the [PUBLISH](https://redis.io/commands/publ
 
 You must first install the redis dependency.
 
-```bash`
+```bash
 $ npm install --save redis
 ```
 
